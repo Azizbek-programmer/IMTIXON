@@ -4,6 +4,8 @@
 // Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
+// https://drawsql.app/teams/azizbek-14/diagrams/mebelzone
+
 generator client {
   provider = "prisma-client-js"
   output   = "../generated/prisma"
@@ -13,10 +15,111 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+enum Roles {
+  SUPERADMIN
+  ADMIN
+  CUSTOMER
+  SELLER
+  WORKER
+}
+enum Status {  
+  ACTIVE  
+  INACTIVE  
+  BLOCKED  
+}
+
+enum ServiceType {
+  INSTALLATION   // O‘rnatish
+  REPAIR         // Ta’mirlash
+  CLEANING       // Tozalash
+  MAINTENANCE    // Texnik xizmat
+  OTHER          // Boshqa
+}
+
+enum ServiceRequestStatus {
+  NEW
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+}
+
+enum ServiceRating {
+  ONE
+  TWO
+  THREE
+  FOUR
+  FIVE
+}
+
+enum NotificationType {
+  PAYMENT
+  ORDER_STATUS
+  WARNING
+  PROMO
+  GENERAL
+}
+
+enum ProductColor {
+  RED
+  BLUE
+  GREEN
+  YELLOW
+  BLACK
+  WHITE
+  ORANGE
+}
+
+enum ActivityType {
+  CREATE
+  UPDATE
+  DELETE
+  LOGIN
+  LOGOUT
+}
+
+/// Order holatlari
+enum OrderStatus {
+  PENDING      // Kutilmoqda
+  PROCESSING   // Bajarilyapti
+  CANCELED     // Bekor qilindi
+  COMPLETED    // Yakunlandi (qo‘shimcha qo‘ydim professionalroq bo‘lishi uchun)
+}
+
+/// Buyurtma turi
+enum OrderType {
+  PRODUCT      // Faqat mahsulot
+  SERVICE      // Faqat servis
+  BOTH         // Mahsulot + servis
+}
+
+/// To‘lov usullari
+enum PaymentMethod {
+  CASH
+  CARD
+  ONLINE
+  PAYME        // O‘zbekistondagi misol
+  CLICK
+}
+
+/// To‘lov holati
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
+/// To‘lov turi
+enum PaymentType {
+  PRODUCT
+  SERVICE
+  DELIVERY
+  OTHER
+}
+
 
 
 model User {  
-  id            BigInt   @id @default(autoincrement())  
+  id            Int   @id @default(autoincrement())  
   full_name     String   @db.VarChar(50)
   email         String   @unique  
   password      String  
@@ -27,38 +130,198 @@ model User {
   hashedRefreshToken String?
   activationLink     String
   is_verified   Boolean  @default(false)  
-  language_id   BigInt? 
+  language_id   Int? 
+
+  reviews    Reviews[]
+  activity_logs   Activity_logs[]
+  notifications   Notifications[]
+  customerRequests   Service_requests[]  @relation("ServiceRequestsUser")
+  technicianRequests Service_requests[]  @relation("ServiceRequestsTechnician")
+
+  orders      Order[]
+  payments    Payments[]
+
+  language           Language? @relation(fields: [language_id], references: [id], onDelete: SetNull)
+  createAt DateTime @default(now())
+  uptadeAt DateTime @updatedAt
+}
+
+model Language {
+  id       Int     @id @default(autoincrement())
+  name     String  @unique @db.VarChar(50)
+
+  users    User[]
+  createAt DateTime @default(now())
+  uptadeAt DateTime @updatedAt
+}
+
+
+
+model Reviews {
+  id         Int     @id @default(autoincrement())
+  user_id    Int
+  product_id Int     
+  service_id Int?
+  rating     Int
+  comment    String?
+
+  user    User    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  service Service? @relation(fields: [service_id], references: [id], onDelete: SetNull)
+  product Product @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  createAt DateTime @default(now())
+  uptadeAt DateTime @updatedAt
+}
+
+model Service {
+  id               Int     @id @default(autoincrement())
+  name             String  @db.VarChar(100)
+  description      String? @db.VarChar(255)
+  price            BigInt
+  duration_minutes String? @db.VarChar(50)
+  type             ServiceType? 
+  warranty_days    String? @db.VarChar(50)
+
+  reviews         Reviews[]
+  serviceRequests Service_requests[]
+  orders          Order[]
+  order_items     Order_items[]
 
   createAt DateTime @default(now())
   uptadeAt DateTime @updatedAt
 }
 
-enum Roles {
-  SUPERADMIN
-  ADMIN
-  CUSTOMER
-  SELLER
-  WORKER
-}
+model Service_requests {
+  id                  Int      @id @default(autoincrement())
+  user_id             Int
+  service_id          Int
+  scheduled_at        String?   @db.VarChar(100)
+  address             String?   @db.VarChar(255)
+  technician_id       Int?
+  status              ServiceRequestStatus?   
+  real_duration_minutes String? 
+  rating              ServiceRating?   
 
-enum Status {  
-  ACTIVE  
-  INACTIVE  
-  BLOCKED  
-}
-
-model Users {
-  id                 Int      @id @default(autoincrement())
-  full_name          String   @db.VarChar(50)
-  email              String   @unique @db.VarChar(50)
-  phone              String?  @unique @db.VarChar(15)
-  hashedPassword     String
-  isActivated        Boolean?
-  is_approved        Boolean
-  role               String
-
+  
+  user       User     @relation("ServiceRequestsUser", fields: [user_id], references: [id], onDelete: Cascade)
+  technician User?    @relation("ServiceRequestsTechnician", fields: [technician_id], references: [id], onDelete: SetNull)
+  service    Service  @relation(fields: [service_id], references: [id], onDelete: Cascade)
   createAt DateTime @default(now())
   uptadeAt DateTime @updatedAt
+}
 
-  @@map("users")
+model Notifications {
+  id                 Int     @id @default(autoincrement())
+  user_id            Int
+  title              String  @db.VarChar(100)
+  message            String? @db.VarChar(255)
+  notification_type  NotificationType  
+  is_read            Boolean @default(false)
+
+  
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  createAt DateTime @default(now())
+  uptadeAt DateTime @updatedAt
+}
+
+model Category {
+  id           Int      @id @default(autoincrement())
+  name         String   @db.VarChar(100)
+  description  String?  @db.VarChar(255)
+
+  products     Product[]
+}
+
+model Product {
+  id            Int          @id @default(autoincrement())
+  name          String       @db.VarChar(100)
+  description   String?      @db.VarChar(255)
+  price         BigInt
+  stock_quantity BigInt
+  dimensions    String?      @db.VarChar(100)
+  color         ProductColor
+  category_id   Int
+
+  category Category @relation(fields: [category_id], references: [id], onDelete: Cascade)
+  images   Images[]
+  reviews  Reviews[]  
+  order_items Order_items[]
+
+  createAt DateTime @default(now())
+  updateAt DateTime @updatedAt
+}
+
+
+
+model Images {
+  id            Int      @id @default(autoincrement())
+  product_id    Int
+  image_url     String   @db.VarChar(255)
+  descriptions  String?  @db.VarChar(255)
+
+  product Product @relation(fields: [product_id], references: [id], onDelete: Cascade)
+}
+
+model Activity_logs {
+  id          Int      @id @default(autoincrement())
+  user_id     Int
+  type        ActivityType
+  target_table String   @db.VarChar(100)
+  old_value    String?  @db.VarChar(255)
+  new_value    String?  @db.VarChar(255)
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+}
+
+model Order {
+  id               Int            @id @default(autoincrement())
+  user_id          Int
+  total_price      BigInt
+  status           OrderStatus    @default(PENDING)
+  order_type       OrderType
+  delivery_address String?        @db.VarChar(255)
+  payment_method   PaymentMethod
+  service_id       Int?
+
+  // Relations
+  user        User          @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  service     Service?      @relation(fields: [service_id], references: [id], onDelete: SetNull)
+  orderItems  Order_items[]
+  payments    Payments[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Order_items {
+  id         Int     @id @default(autoincrement())
+  order_id   Int
+  product_id Int?
+  service_id Int?
+  quantity   Int
+  unit_price BigInt
+  note       String? @db.VarChar(255)
+
+  // Relations
+  order   Order   @relation(fields: [order_id], references: [id], onDelete: Cascade)
+  product Product? @relation(fields: [product_id], references: [id], onDelete: SetNull)
+  service Service? @relation(fields: [service_id], references: [id], onDelete: SetNull)
+}
+
+model Payments {
+  id             Int           @id @default(autoincrement())
+  receipt_number Int?
+  user_id        Int
+  amount         BigInt
+  user_card      Int?
+  order_id       Int
+  method         PaymentMethod
+  status         PaymentStatus
+  paid_at        DateTime?
+  payment_type   PaymentType
+
+  // Relations
+  user  User  @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  order Order @relation(fields: [order_id], references: [id], onDelete: Cascade)
 }

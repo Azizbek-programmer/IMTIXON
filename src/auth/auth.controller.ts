@@ -1,34 +1,52 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  HttpCode,
+  Param,
+  ParseIntPipe,
+  Post,
+  Res,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { CreateAuthDto } from './dto/create-auth.dto';
-import { UpdateAuthDto } from './dto/update-auth.dto';
+import { SigninUserDto } from '../user/dto/signin-user.dto';
+import { CreateUserDto } from '../user/dto/create-user.dto';
+import { CookieGetter } from '../common/decorators/cookie-geter.decorator';
+import type { Response } from 'express';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @Post()
-  create(@Body() createAuthDto: CreateAuthDto) {
-    return this.authService.create(createAuthDto);
+  @Post('signUp')
+  signUp(@Body() createUserDto: CreateUserDto) {
+    return this.authService.signUp(createUserDto);
   }
 
-  @Get()
-  findAll() {
-    return this.authService.findAll();
+  @HttpCode(200)
+  @Post('signIn')
+  signIn(
+    @Body() signInUserDto: SigninUserDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    return this.authService.signIn(signInUserDto, res);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.authService.findOne(+id);
+  @HttpCode(200)
+  @Post('signOut')
+  signOut(
+    @CookieGetter("refreshToken") refreshToken: string,
+    @Res({passthrough: true}) res: Response
+  ) {
+    return this.authService.signOut(refreshToken, res)
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateAuthDto: UpdateAuthDto) {
-    return this.authService.update(+id, updateAuthDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.authService.remove(+id);
+  @HttpCode(200)
+  @Post('refresh/:id')
+  refresh(
+    @Param('id', ParseIntPipe) id: number,
+    @CookieGetter('refreshToken') refreshToken: string,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    return this.authService.refresh_token(id, refreshToken, res);
   }
 }
