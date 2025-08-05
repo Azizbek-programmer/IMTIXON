@@ -5,6 +5,7 @@ import cookieParser from 'cookie-parser';
 
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { UserService } from './user/user.service';
+import { LanguageService } from './language/language.service';
 
 
 
@@ -31,9 +32,10 @@ async function bootstrap() {
   await app.listen(PORT ?? 4040, () => {
     console.log(`🚀 Server running at http://localhost:${PORT}/docs`);
   });
-  // console.log('ENV PORT =', process.env.PORT);
 
   const userService = app.get(UserService);
+  const languageService = app.get(LanguageService);
+  await languageService.createDefaultLanguages();
   await userService.createSuperAdminData();
 }
 bootstrap();

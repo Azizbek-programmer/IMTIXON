@@ -9,6 +9,10 @@ import { ServiceRequestsModule } from './service_requests/service_requests.modul
 import { ImagesModule } from './images/images.module';
 import { ProductModule } from './product/product.module';
 import { CategoryModule } from './category/category.module';
+import { NotificationsModule } from './notifications/notifications.module';
+import { OrderModule } from './order/order.module';
+import { OrderItemsModule } from './order_items/order_items.module';
+import { PaymentsModule } from './payments/payments.module';
 
 @Module({
   imports: [
@@ -22,6 +26,10 @@ import { CategoryModule } from './category/category.module';
     ImagesModule,
     ProductModule,
     CategoryModule,
+    NotificationsModule,
+    OrderModule,
+    OrderItemsModule,
+    PaymentsModule,
   ],
   controllers: [],
   providers: [],

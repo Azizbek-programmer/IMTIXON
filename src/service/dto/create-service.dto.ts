@@ -3,16 +3,16 @@ import { IsInt, IsOptional, IsString, Min } from 'class-validator';
 import { ServiceType } from 'generated/prisma'; // Prisma enum
 
 export class CreateServiceDto {
-  @ApiProperty({ example: 'Konditsioner o‘rnatish', description: 'Xizmat nomi' })
+  @ApiProperty({ example: 'Konditsioner ornatish', description: 'Xizmat nomi' })
   @IsString()
   name: string;
 
-  @ApiProperty({ example: 'Professional o‘rnatish xizmati', required: false })
+  @ApiProperty({ example: 'Professional ornatish xizmati', required: false })
   @IsOptional()
   @IsString()
   description?: string;
 
-  @ApiProperty({ example: 150000, description: 'Xizmat narxi so‘mda' })
+  @ApiProperty({ example: 150000, description: 'Xizmat narxi somda' })
   @IsInt()
   @Min(0)
   price: number;
@@ -33,12 +33,12 @@ export class CreateServiceDto {
 }
 
 export class UpdateServiceDto {
-  @ApiProperty({ example: 'Konditsioner o‘rnatish', required: false })
+  @ApiProperty({ example: 'Konditsioner ornatish', required: false })
   @IsOptional()
   @IsString()
   name?: string;
 
-  @ApiProperty({ example: 'Professional o‘rnatish xizmati', required: false })
+  @ApiProperty({ example: 'Professional ornatish xizmati', required: false })
   @IsOptional()
   @IsString()
   description?: string;

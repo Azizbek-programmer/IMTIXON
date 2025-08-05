@@ -13,95 +13,135 @@ export class UserService {
   ) {}
 
   async createSuperAdminData() {
-    const existingSuperAdmins = await this.prismaService.user.findMany({
-      where: { role: Roles.SUPERADMIN },
-    });
+    try {
+      const existingSuperAdmins = await this.prismaService.user.findMany({
+        where: { role: Roles.SUPERADMIN },
+      });
 
-    if (existingSuperAdmins.length > 0) {
-      console.log('❗ Super admin allaqachon mavjud');
-      return existingSuperAdmins[0];
+      if (existingSuperAdmins.length > 0) {
+        console.log('❗ Super admin allaqachon mavjud');
+        return existingSuperAdmins[0];
+      }
+
+      const superAdmin = await this.prismaService.user.create({
+        data: {
+          full_name: 'Super Admin',
+          email: 'admin@example.com',
+          phone: '+998901112233',
+          password: await bcrypt.hash('P@ssw0rd123', 10),
+          status: Status.ACTIVE,
+          role: Roles.SUPERADMIN,
+          is_verified: true,
+          activationLink: uuidv4(),
+          language_id: 1
+        },
+      });
+
+      console.log('✅ Super admin yaratildi');
+      return superAdmin;
+    } catch (error) {
+      throw error;
     }
-    // const hashedRefreshToken = 
-    const superAdmin = await this.prismaService.user.create({
-      data: {
-        full_name: 'Super Admin',
-        email: 'admin@example.com',
-        phone: '+998901112233',
-        password: await bcrypt.hash('P@ssw0rd123', 10),
-        status: Status.ACTIVE,
-        role: Roles.SUPERADMIN,
-        is_verified: true,
-        activationLink: uuidv4(),
-        language_id:1
-      },
-    });
-
-    console.log('✅ Super admin yaratildi');
-    return superAdmin;
   }
 
   async create(createUserDto: CreateUserDto) {
-    const { full_name, phone, email, password, confirm_password, role } = createUserDto;
+    try {
+      const { full_name, phone, email, password, confirm_password, role } = createUserDto;
 
-    if (password !== confirm_password) {
-      throw new BadRequestException('Parollar mos emas');
+      if (password !== confirm_password) {
+        throw new BadRequestException('Parollar mos emas');
+      }
+
+      const existingEmail = await this.prismaService.user.findUnique({ where: { email } });
+      if (existingEmail) {
+        throw new BadRequestException('Bu email bilan foydalanuvchi allaqachon mavjud');
+      }
+
+      if (!Object.values(Roles).includes(role as Roles)) {
+        throw new BadRequestException('Bunday role mavjud emas');
+      }
+
+      let userRole: Roles = Roles.CUSTOMER;
+      if (role) {
+        if (!Object.values(Roles).includes(role)) {
+          throw new BadRequestException('Bunday role mavjud emas');
+        }
+        userRole = role;
+      }
+
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      return await this.prismaService.user.create({
+        data: {
+          full_name,
+          phone,
+          email,
+          password: hashedPassword,
+          is_verified: false,
+          status: Status.INACTIVE, 
+          role: userRole,
+          activationLink: uuidv4(),
+        },
+      });
+    } catch (error) {
+      throw error;
     }
-
-    const existingEmail = await this.prismaService.user.findUnique({ where: { email } });
-    if (existingEmail) {
-      throw new BadRequestException('Bu email bilan foydalanuvchi allaqachon mavjud');
-    }
-
-    if (!Object.values(Roles).includes(role as Roles)) {
-      throw new BadRequestException('Bunday role mavjud emas');
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    return await this.prismaService.user.create({
-      data: {
-        full_name,
-        phone,
-        email,
-        password: hashedPassword,
-        is_verified: false,
-        status: Status.INACTIVE, 
-        role,
-        activationLink: uuidv4(),
-      },
-    });
   }
 
   async findAll() {
-    return await this.prismaService.user.findMany();
+    try {
+      return await this.prismaService.user.findMany();
+    } catch (error) {
+      throw error;
+    }
   }
 
   async findOne(id: number) {
-    return await this.prismaService.user.findUnique({ where: { id } });
+    try {
+      return await this.prismaService.user.findUnique({ where: { id } });
+    } catch (error) {
+      throw error;
+    }
   }
 
   async update(id: number, updateUserDto: UpdateUserDto) {
-    return await this.prismaService.user.update({
-      where: { id },
-      data: updateUserDto,
-    });
+    try {
+      return await this.prismaService.user.update({
+        where: { id },
+        data: updateUserDto,
+      });
+    } catch (error) {
+      throw error;
+    }
   }
 
   async remove(id: number) {
-    return await this.prismaService.user.delete({ where: { id } });
+    try {
+      return await this.prismaService.user.delete({ where: { id } });
+    } catch (error) {
+      throw error;
+    }
   }
 
   async findUserByEmail(email: string) {
-    return await this.prismaService.user.findUnique({ where: { email } });
+    try {
+      return await this.prismaService.user.findUnique({ where: { email } });
+    } catch (error) {
+      throw error;
+    }
   }
 
   async updateRefreshToken(id: number, hashedRefreshToken: string) {
-    const user = await this.prismaService.user.findUnique({ where: { id } });
-    if (!user) throw new BadRequestException('Foydalanuvchi topilmadi');
+    try {
+      const user = await this.prismaService.user.findUnique({ where: { id } });
+      if (!user) throw new BadRequestException('Foydalanuvchi topilmadi');
 
-    return await this.prismaService.user.update({
-      where: { id },
-      data: { hashedRefreshToken },
-    });
+      return await this.prismaService.user.update({
+        where: { id },
+        data: { hashedRefreshToken },
+      });
+    } catch (error) {
+      throw error;
+    }
   }
 }

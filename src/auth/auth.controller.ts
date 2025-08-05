@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Get,
   HttpCode,
   Param,
   ParseIntPipe,
@@ -48,5 +49,10 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
   ) {
     return this.authService.refresh_token(id, refreshToken, res);
+  }
+
+    @Get('activate/:link')
+  async activate(@Param('link') link: string) {
+    return this.authService.activateAccount(link);
   }
 }

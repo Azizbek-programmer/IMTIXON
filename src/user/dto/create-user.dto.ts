@@ -1,13 +1,10 @@
 import {
-  IsBoolean,
-  IsDate,
   IsEmail,
   IsEnum,
   IsNotEmpty,
   IsOptional,
   IsString,
 } from 'class-validator';
-import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export enum Roles {
@@ -42,15 +39,10 @@ export class CreateUserDto {
   @IsString()
   phone?: string;
 
-  @ApiPropertyOptional({ example: '1999-12-31', type: String, format: 'date', description: 'Tug‘ilgan sana' })
+  @ApiPropertyOptional({ enum: Roles, example: Roles.CUSTOMER, description: 'Foydalanuvchi roli (ixtiyoriy)' })
   @IsOptional()
-  @IsDate()
-  @Type(() => Date)
-  birth_date?: Date;
-
-  @ApiProperty({ enum: Roles, example: Roles.CUSTOMER, description: 'Foydalanuvchi roli' })
   @IsEnum(Roles)
-  role: Roles;
+  role?: Roles;
 
   @ApiPropertyOptional({ example: 1, description: 'Til ID (agar kerak bo‘lsa)' })
   @IsOptional()

@@ -124,9 +124,8 @@ model User {
   email         String   @unique  
   password      String  
   phone         String?  
-  status        Status  
-  birth_date    DateTime?  
-  role          Roles 
+  status        Status
+  role          Roles  //@default(Roles.CUSTOMER)
   hashedRefreshToken String?
   activationLink     String
   is_verified   Boolean  @default(false)  
@@ -176,7 +175,7 @@ model Service {
   id               Int     @id @default(autoincrement())
   name             String  @db.VarChar(100)
   description      String? @db.VarChar(255)
-  price            BigInt
+  price            Int
   duration_minutes String? @db.VarChar(50)
   type             ServiceType? 
   warranty_days    String? @db.VarChar(50)
@@ -235,8 +234,8 @@ model Product {
   id            Int          @id @default(autoincrement())
   name          String       @db.VarChar(100)
   description   String?      @db.VarChar(255)
-  price         BigInt
-  stock_quantity BigInt
+  price         Int
+  stock_quantity Int
   dimensions    String?      @db.VarChar(100)
   color         ProductColor
   category_id   Int
@@ -277,7 +276,7 @@ model Activity_logs {
 model Order {
   id               Int            @id @default(autoincrement())
   user_id          Int
-  total_price      BigInt
+  total_price      Int
   status           OrderStatus    @default(PENDING)
   order_type       OrderType
   delivery_address String?        @db.VarChar(255)
@@ -300,7 +299,7 @@ model Order_items {
   product_id Int?
   service_id Int?
   quantity   Int
-  unit_price BigInt
+  unit_price Int
   note       String? @db.VarChar(255)
 
   // Relations
@@ -313,7 +312,7 @@ model Payments {
   id             Int           @id @default(autoincrement())
   receipt_number Int?
   user_id        Int
-  amount         BigInt
+  amount         Int
   user_card      Int?
   order_id       Int
   method         PaymentMethod

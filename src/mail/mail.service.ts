@@ -1,24 +1,34 @@
-import { MailerService } from '@nestjs-modules/mailer';
-import { Injectable } from '@nestjs/common';
-import { User } from '../../generated/prisma';
-
+import { MailerService } from "@nestjs-modules/mailer";
+import { User } from "../../generated/prisma";
+import { Injectable } from "@nestjs/common";
 
 @Injectable()
 export class MailService {
-    constructor(private readonly mailllerService: MailerService){}
+  constructor(private readonly mailerService: MailerService) {}
 
-    async sendOtp(email: string, otp: string) {
-      await this.mailllerService.sendMail({
-        to: email,
-        subject: 'InBook uchun tasdiqlash kodi (OTP)',
-        template: '', // agar siz `handlebars` shablon ishlatsangiz, bu yerga qo‘shing
-        html: `
-          <p>Assalomu alaykum!</p>
-          <p>Siz tizimga kirish uchun OTP kod oldingiz:</p>
-          <h2>${otp}</h2>
-          <p>Kod faqat 1 daqiqa amal qiladi.</p>
-        `
-      });
-    }
-    
+  async sendMail(user: User) {
+    const url = `${process.env.API_URL}/api/auth/activate/${user.activationLink}`;
+
+    await this.mailerService.sendMail({
+      to: user.email,
+      subject: `Welcome to Mebel Zone!`,
+      template: 'confirmation',
+      context: {
+        username: user.full_name,
+        url,
+      },
+    });
+  }
+
+  async sendResetPasswordEmail(user: User, resetPasswordUrl: string) {
+    await this.mailerService.sendMail({
+      to: user.email,
+      subject: 'Parolni tiklash',
+      template: 'reset-password',
+      context: {
+        username: user.full_name,
+        resetPasswordUrl,
+      },
+    });
+  }
 }

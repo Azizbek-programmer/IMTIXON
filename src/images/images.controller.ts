@@ -1,16 +1,62 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseInterceptors, UploadedFile } from '@nestjs/common';
 import { ImagesService } from './images.service';
 import { CreateImageDto } from './dto/create-image.dto';
 import { UpdateImageDto } from './dto/update-image.dto';
+import { ApiBody, ApiConsumes, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { extname } from 'path';
 
 @Controller('images')
 export class ImagesController {
   constructor(private readonly imagesService: ImagesService) {}
 
   @Post()
-  create(@Body() createImageDto: CreateImageDto) {
-    return this.imagesService.create(createImageDto);
+  @ApiOperation({ summary: 'Create a new post ✨' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+  schema: {
+    type: 'object',
+    properties: {
+      product_id: { type: 'integer' }, 
+      image_url: {
+        type: 'string',
+        format: 'binary',
+      },
+    },
+  },
+})
+
+  @ApiResponse({
+    status: 201,
+    description: 'The post has been successfully created 🎉',
+  })
+  @UseInterceptors(
+    FileInterceptor('image_url', {
+      storage: diskStorage({
+        destination: './uploads',
+        filename: (req, file, cb) => {
+          const uniqueSuffix =
+            Date.now() + '-' + Math.round(Math.random() * 1e9);
+          cb(null, uniqueSuffix + extname(file.originalname));
+        },
+      }),
+      limits: { fileSize: Infinity },
+    }),
+  )
+  create(
+    @UploadedFile() file: Express.Multer.File,
+    @Body() CreateImageDto: CreateImageDto,
+  ) {
+    const image_url = file?.filename;
+    CreateImageDto.product_id = Number(CreateImageDto.product_id);
+    return this.imagesService.create(CreateImageDto, image_url);
   }
+  
+  // @Post()
+  // create(@Body() createImageDto: CreateImageDto) {
+  //   return this.imagesService.create(createImageDto);
+  // }
 
   @Get()
   findAll() {

@@ -23,6 +23,7 @@ export class ReviewsService {
       }
 
       const newReview = await this.prisma.reviews.create({
+
         data: createReviewDto,
       });
 
@@ -40,6 +41,7 @@ export class ReviewsService {
           user: true,
           product: true,
           service: true,
+          
         },
       });
     } catch (error) {

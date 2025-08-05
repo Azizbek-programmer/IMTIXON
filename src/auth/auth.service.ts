@@ -3,17 +3,21 @@ import {
   ConflictException, 
   ForbiddenException, 
   Injectable, 
+  NotFoundException, 
+  ServiceUnavailableException, 
   UnauthorizedException 
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
-import { User } from '../../generated/prisma';
+import { Roles, User } from '../../generated/prisma';
 import * as bcrypt from 'bcrypt';
 import { Response } from 'express';
 import { UserService } from '../user/user.service';
 import { CreateUserDto } from '../user/dto/create-user.dto';
 import { SigninUserDto } from '../user/dto/signin-user.dto';
 import { Status } from '../../generated/prisma';
+import { v4 as uuidv4 } from 'uuid';
+import { MailService } from 'src/mail/mail.service';
 
 @Injectable()
 export class AuthService {
@@ -21,6 +25,7 @@ export class AuthService {
     private readonly prismaService: PrismaService,
     private readonly jwtService: JwtService,
     private readonly usersService: UserService,
+    private readonly mailService: MailService,
   ) {}
 
   private async generateTokens(user: User) {
@@ -40,42 +45,71 @@ export class AuthService {
     return { accessToken, refreshToken };
   }
 
-  async createSuperAdmin() {
-    try {
-      const superAdmin = await this.usersService.createSuperAdminData();
-      if (!superAdmin) return;
-
-      const { accessToken, refreshToken } = await this.generateTokens(superAdmin);
-      const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
-
-      await this.prismaService.user.update({
-        where: { id: superAdmin.id },
-        data: { hashedRefreshToken },
-      });
-
-      return {
-        statusCode: 201,
-        message: 'Super Admin yaratildi',
-        superAdminId: superAdmin.id,
-        accessToken,
-        refreshToken,
-      };
-    } catch (error) {
-      throw new BadRequestException(error.message || 'Super Admin yaratishda xatolik');
-    }
-  }
-
   async signUp(createUserDto: CreateUserDto) {
     try {
-      const newUser = await this.usersService.create(createUserDto);
+      const { email, password, confirm_password, full_name, phone, role, language_id } = createUserDto;
+
+      if (password !== confirm_password) {
+        throw new BadRequestException('Parollar mos emas');
+      }
+
+      const existingUser = await this.prismaService.user.findFirst({
+        where: { OR: [{ email }, { phone }] },
+      });
+      if (existingUser) {
+        throw new ConflictException('Bunday foydalanuvchi allaqachon mavjud');
+      }
+
+      const hashedPassword = await bcrypt.hash(password, 10);
+      const activationLink = uuidv4();
+
+      const newUser = await this.prismaService.user.create({
+        data: {
+          email,
+          full_name,
+          phone,
+          role: Roles.CUSTOMER,
+          password: hashedPassword,
+          activationLink: activationLink,
+          is_verified: false,
+          status: Status.INACTIVE,
+          language_id
+        },
+      });
+
+      try {
+        await this.mailService.sendMail(newUser);
+      } catch (error) {
+        console.error('Email yuborishda xatolik:', error);
+        throw new ServiceUnavailableException('Email yuborishda xatolik yuz berdi');
+      }
 
       return {
         statusCode: 201,
-        message: 'Yangi foydalanuvchi muvaffaqiyatli yaratildi (inactive)',
+        message: 'Royxatdan otdingiz. Email orqali akkauntni faollashtiring.',
         userId: newUser.id,
       };
     } catch (error) {
-      throw new BadRequestException(error.message || 'Sign Up vaqtida xatolik');
+      throw error;
+    }
+  }
+
+  async activateAccount(link: string) {
+    try {
+      const user = await this.prismaService.user.findFirst({
+        where: { activationLink: link },
+      });
+
+      if (!user) throw new NotFoundException('Aktivatsiya havolasi notogri yoki eskirgan');
+
+      await this.prismaService.user.update({
+        where: { id: user.id },
+        data: { is_verified: true },
+      });
+
+      return { message: 'Akkaunt muvaffaqiyatli faollashtirildi' };
+    } catch (error) {
+      throw error;
     }
   }
 
@@ -88,14 +122,18 @@ export class AuthService {
       const isMatch = await bcrypt.compare(password, user.password);
       if (!isMatch) throw new UnauthorizedException('Email yoki parol notogri');
 
+      if (!user.is_verified) {
+        throw new UnauthorizedException('Akkaunt hali faollashtirilmagan');
+      }
+
       const { accessToken, refreshToken } = await this.generateTokens(user);
       const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
 
       await this.prismaService.user.update({
         where: { id: user.id },
-        data: { 
+        data: {
           hashedRefreshToken,
-          status: Status.ACTIVE, 
+          status: Status.ACTIVE,
         },
       });
 
@@ -113,7 +151,7 @@ export class AuthService {
         accessToken,
       };
     } catch (error) {
-      throw new UnauthorizedException(error.message || 'Sign In vaqtida xatolik');
+      throw error;
     }
   }
 
@@ -127,6 +165,13 @@ export class AuthService {
 
       await this.usersService.updateRefreshToken(userData.id, '');
       res.clearCookie('refreshToken');
+
+      await this.prismaService.user.update({
+        where: { id: userData.id },
+        data: {
+          status: Status.INACTIVE,
+        },
+      });
 
       return {
         statusCode: 200,
