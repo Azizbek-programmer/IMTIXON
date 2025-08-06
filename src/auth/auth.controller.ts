@@ -3,18 +3,25 @@ import {
   Controller,
   Get,
   HttpCode,
+  HttpStatus,
   Param,
   ParseIntPipe,
   Post,
   Res,
+  UseGuards,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { SigninUserDto } from '../user/dto/signin-user.dto';
 import { CreateUserDto } from '../user/dto/create-user.dto';
-import { CookieGetter } from '../common/decorators/cookie-geter.decorator';
+import { GetCurrentUser, GetCurrentUserId } from '../common/decorators';
 import type { Response } from 'express';
+import { AuthGuard, RfreshTokenGuard } from 'src/common/guard';
+import { ResposeFields } from 'src/common/types';
+import { Roles } from '../common/decorators/roles.decorator';
+import { RoleGuard } from 'src/common/guard/role.guard';
 
 @Controller('auth')
+@UseGuards(AuthGuard, RoleGuard)
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
@@ -22,7 +29,7 @@ export class AuthController {
   signUp(@Body() createUserDto: CreateUserDto) {
     return this.authService.signUp(createUserDto);
   }
-
+  @Roles('SUPERADMIN', 'ADMIN', 'CUSTOMER') 
   @HttpCode(200)
   @Post('signIn')
   signIn(
@@ -33,22 +40,24 @@ export class AuthController {
   }
 
   @HttpCode(200)
-  @Post('signOut')
+  @HttpCode(HttpStatus.OK)
+  @Post('signOut/:id')
   signOut(
-    @CookieGetter("refreshToken") refreshToken: string,
-    @Res({passthrough: true}) res: Response
-  ) {
-    return this.authService.signOut(refreshToken, res)
-  }
-
-  @HttpCode(200)
-  @Post('refresh/:id')
-  refresh(
-    @Param('id', ParseIntPipe) id: number,
-    @CookieGetter('refreshToken') refreshToken: string,
+    @GetCurrentUserId() id: string,
     @Res({ passthrough: true }) res: Response,
   ) {
-    return this.authService.refresh_token(id, refreshToken, res);
+    return this.authService.signOut(+id, res)
+  }
+
+  @UseGuards(RfreshTokenGuard)
+  @HttpCode(200)
+  @Post('refresh')
+  async refreshToken(
+    @GetCurrentUserId() userId: number,
+    @GetCurrentUser('refreshToken') refreshToken: string,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<ResposeFields> {
+    return this.authService.refresh_token(userId, refreshToken, res);
   }
 
     @Get('activate/:link')

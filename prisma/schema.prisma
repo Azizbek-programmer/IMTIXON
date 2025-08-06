@@ -313,7 +313,6 @@ model Payments {
   receipt_number Int?
   user_id        Int
   amount         Int
-  user_card      Int?
   order_id       Int
   method         PaymentMethod
   status         PaymentStatus

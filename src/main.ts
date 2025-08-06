@@ -6,18 +6,21 @@ import cookieParser from 'cookie-parser';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { UserService } from './user/user.service';
 import { LanguageService } from './language/language.service';
+import { WinstonModule } from 'nest-winston';
 
 
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    // logger: WinstonModule.createLogger(winstonConfig)
+  });
 
   app.use(cookieParser());
   app.setGlobalPrefix('api');
 
   const swaggerConfig = new DocumentBuilder()
     .setTitle('Auth API')
-    .setDescription('Foydalanuvchi avtorizatsiyasi va roʻyxatdan oʻtish')
+    .setDescription('Foydalanuvchi avtorizatsiyasi va royxatdan otish')
     .setVersion('1.0')
     .addTag('auth')
     .addBearerAuth()

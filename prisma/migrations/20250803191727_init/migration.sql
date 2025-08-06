@@ -48,7 +48,6 @@ CREATE TABLE "public"."Payments" (
     "receipt_number" INTEGER,
     "user_id" INTEGER NOT NULL,
     "amount" BIGINT NOT NULL,
-    "user_card" INTEGER,
     "order_id" INTEGER NOT NULL,
     "method" "public"."PaymentMethod" NOT NULL,
     "status" "public"."PaymentStatus" NOT NULL,

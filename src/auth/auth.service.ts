@@ -18,6 +18,7 @@ import { SigninUserDto } from '../user/dto/signin-user.dto';
 import { Status } from '../../generated/prisma';
 import { v4 as uuidv4 } from 'uuid';
 import { MailService } from 'src/mail/mail.service';
+import { JwtPayload } from 'src/common/types';
 
 @Injectable()
 export class AuthService {
@@ -29,7 +30,7 @@ export class AuthService {
   ) {}
 
   private async generateTokens(user: User) {
-    const payload = { id: user.id, email: user.email, role: user.role };
+    const payload:JwtPayload = { id: user.id, email: user.email, role: user.role };
 
     const [accessToken, refreshToken] = await Promise.all([
       this.jwtService.signAsync(payload, {
@@ -155,19 +156,21 @@ export class AuthService {
     }
   }
 
-  async signOut(refreshToken: string, res: Response) {
+  async signOut(userId: number, res: Response) {
     try {
-      const userData = await this.jwtService.verify(refreshToken, {
-        secret: process.env.REFRESH_TOKEN_KEY,
-      });
+       const user = await this.prismaService.user.findUnique({
+      where: { id: userId },
+    });
 
-      if (!userData) throw new ForbiddenException('User topilmadi');
-
-      await this.usersService.updateRefreshToken(userData.id, '');
-      res.clearCookie('refreshToken');
+      if (!user) throw new ForbiddenException('User topilmadi');
 
       await this.prismaService.user.update({
-        where: { id: userData.id },
+      where: { id: userId },
+      data: { hashedRefreshToken: null },
+    });
+
+      await this.prismaService.user.update({
+        where: { id: user.id },
         data: {
           status: Status.INACTIVE,
         },

@@ -1,12 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsDateString, IsEnum, IsInt, IsOptional } from 'class-validator';
-import { PaymentMethod, PaymentStatus, PaymentType } from 'generated/prisma'; // Prisma enum
+import { PaymentMethod, PaymentStatus, PaymentType } from 'generated/prisma'; 
 
 export class CreatePaymentDto {
-  @ApiProperty({ example: 123456, description: 'Chek raqami', required: false })
-  @IsOptional()
-  @IsInt()
-  receipt_number?: number;
 
   @ApiProperty({ example: 1, description: 'Foydalanuvchi ID' })
   @IsInt()
@@ -15,11 +11,6 @@ export class CreatePaymentDto {
   @ApiProperty({ example: 250000, description: 'Tolov summasi (somda)' })
   @IsInt()
   amount: number;
-
-  @ApiProperty({ example: 8600123456789012, description: 'Foydalanuvchi kartasi raqami', required: false })
-  @IsOptional()
-  @IsInt()
-  user_card?: number;
 
   @ApiProperty({ example: 1, description: 'Buyurtma ID' })
   @IsInt()

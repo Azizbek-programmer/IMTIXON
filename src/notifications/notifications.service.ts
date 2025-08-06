@@ -25,24 +25,46 @@ export class NotificationsService {
     }
   }
 
-  async findAll() {
+  async findAll(userId: number) {
     try {
       const notifications = await this.prismaService.notifications.findMany({
         include: { user: true },
       });
+
+      const unreadIds = notifications
+    .filter(n => !n.is_read)
+    .map(n => n.id);
+
+  if (unreadIds.length > 0) {
+    await this.prismaService.notifications.updateMany({
+      where: { id: { in: unreadIds } },
+      data: { is_read: true },
+    });
+
+    notifications.forEach(n => { n.is_read = true });
+  }
+
       return { statusCode: 200, data: notifications };
     } catch (error) {
       throw new InternalServerErrorException(error.message || 'Server xatosi');
     }
   }
 
-  async findOne(id: number) {
+  async findOne(id: number, currentUserId: number) {
     const notification = await this.prismaService.notifications.findUnique({
       where: { id },
       include: { user: true },
     });
 
     if (!notification) throw new NotFoundException('Bildirishnoma topilmadi');
+
+    if (notification.user_id === currentUserId && !notification.is_read) {
+    await this.prismaService.notifications.update({
+      where: { id },
+      data: { is_read: true },
+    });
+    notification.is_read = true; 
+  }
 
     return { statusCode: 200, data: notification };
   }

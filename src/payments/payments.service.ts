@@ -1,11 +1,32 @@
-import { Injectable, NotFoundException, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, NotFoundException, InternalServerErrorException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { UpdatePaymentDto } from './dto/update-payment.dto';
 
 @Injectable()
 export class PaymentsService {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly prismaService: PrismaService
+
+  
+  ) {}
+
+private async generateUniqueReceiptNumber(): Promise<number> {
+  let receipt = 0;
+  let exists = true;
+
+  while (exists) {
+    receipt = Math.floor(100000 + Math.random() * 900000); // 6 xonali random
+    const existing = await this.prismaService.payments.findFirst({
+      where: { receipt_number: receipt },
+    });
+    exists = !!existing;
+  }
+
+  return receipt;
+}
+
+
 
   async create(createPaymentDto: CreatePaymentDto) {
     try {
@@ -16,9 +37,18 @@ export class PaymentsService {
 
       const order = await this.prismaService.order.findUnique({ where: { id: order_id } });
       if (!order) throw new NotFoundException('Buyurtma topilmadi');
+      
+      const receipt_number = await this.generateUniqueReceiptNumber();
+      
+      const amount = order.total_price;
+      if (amount != createPaymentDto.amount) throw new BadRequestException(`Summa to'g'ri emas`);
 
       const payment = await this.prismaService.payments.create({
-        data: createPaymentDto,
+         data: {
+        ...createPaymentDto,
+        amount,
+        receipt_number,
+      },
       });
 
       return { statusCode: 201, message: 'Tolov yaratildi', data: payment };
