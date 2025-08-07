@@ -4,7 +4,7 @@ import { ServiceRequestsController } from './service_requests.controller';
 import { PrismaModule } from 'src/prisma/prisma.module';
 
 @Module({
-  imports:[PrismaModule],
+  imports: [PrismaModule],
   controllers: [ServiceRequestsController],
   providers: [ServiceRequestsService],
   exports: [ServiceRequestsService],

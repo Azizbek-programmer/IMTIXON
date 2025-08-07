@@ -17,7 +17,11 @@ export class CreateServiceDto {
   @Min(0)
   price: number;
 
-  @ApiProperty({ example: '60', description: 'Xizmat davomiyligi (minut)' , required: false })
+  @ApiProperty({
+    example: '60',
+    description: 'Xizmat davomiyligi (minut)',
+    required: false,
+  })
   @IsOptional()
   @IsString()
   duration_minutes?: string;
@@ -26,7 +30,11 @@ export class CreateServiceDto {
   @IsOptional()
   type?: ServiceType;
 
-  @ApiProperty({ example: '30', description: 'Garantiya kunlari', required: false })
+  @ApiProperty({
+    example: '30',
+    description: 'Garantiya kunlari',
+    required: false,
+  })
   @IsOptional()
   @IsString()
   warranty_days?: string;
@@ -63,4 +71,3 @@ export class UpdateServiceDto {
   @IsString()
   warranty_days?: string;
 }
-

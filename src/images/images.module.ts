@@ -4,7 +4,7 @@ import { ImagesController } from './images.controller';
 import { PrismaModule } from 'src/prisma/prisma.module';
 
 @Module({
-  imports:[PrismaModule],
+  imports: [PrismaModule],
   controllers: [ImagesController],
   providers: [ImagesService],
   exports: [ImagesService],

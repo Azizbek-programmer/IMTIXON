@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, InternalServerErrorException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
@@ -9,15 +13,21 @@ export class OrderService {
 
   async create(createOrderDto: CreateOrderDto) {
     try {
-      const user = await this.prismaService.user.findUnique({ where: { id: createOrderDto.user_id } });
+      const user = await this.prismaService.user.findUnique({
+        where: { id: createOrderDto.user_id },
+      });
       if (!user) throw new NotFoundException('Foydalanuvchi topilmadi');
 
       if (createOrderDto.service_id) {
-        const service = await this.prismaService.service.findUnique({ where: { id: createOrderDto.service_id } });
+        const service = await this.prismaService.service.findUnique({
+          where: { id: createOrderDto.service_id },
+        });
         if (!service) throw new NotFoundException('Servis topilmadi');
       }
 
-      const order = await this.prismaService.order.create({ data: createOrderDto });
+      const order = await this.prismaService.order.create({
+        data: createOrderDto,
+      });
 
       return { statusCode: 201, message: 'Buyurtma yaratildi', data: order };
     } catch (error) {
@@ -28,7 +38,12 @@ export class OrderService {
   async findAll() {
     try {
       const orders = await this.prismaService.order.findMany({
-        include: { user: true, service: true, orderItems: true, payments: true },
+        include: {
+          user: true,
+          service: true,
+          orderItems: true,
+          payments: true,
+        },
       });
       return { statusCode: 200, data: orders };
     } catch (error) {
@@ -49,16 +64,22 @@ export class OrderService {
 
   async update(id: number, updateOrderDto: UpdateOrderDto) {
     try {
-      const order = await this.prismaService.order.findUnique({ where: { id } });
+      const order = await this.prismaService.order.findUnique({
+        where: { id },
+      });
       if (!order) throw new NotFoundException('Buyurtma topilmadi');
 
       if (updateOrderDto.user_id) {
-        const user = await this.prismaService.user.findUnique({ where: { id: updateOrderDto.user_id } });
+        const user = await this.prismaService.user.findUnique({
+          where: { id: updateOrderDto.user_id },
+        });
         if (!user) throw new NotFoundException('Foydalanuvchi topilmadi');
       }
 
       if (updateOrderDto.service_id) {
-        const service = await this.prismaService.service.findUnique({ where: { id: updateOrderDto.service_id } });
+        const service = await this.prismaService.service.findUnique({
+          where: { id: updateOrderDto.service_id },
+        });
         if (!service) throw new NotFoundException('Servis topilmadi');
       }
 
@@ -75,7 +96,9 @@ export class OrderService {
 
   async remove(id: number) {
     try {
-      const order = await this.prismaService.order.findUnique({ where: { id } });
+      const order = await this.prismaService.order.findUnique({
+        where: { id },
+      });
       if (!order) throw new NotFoundException('Buyurtma topilmadi');
 
       await this.prismaService.order.delete({ where: { id } });

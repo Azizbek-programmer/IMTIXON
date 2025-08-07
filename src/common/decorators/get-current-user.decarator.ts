@@ -9,8 +9,8 @@ export const GetCurrentUser = createParamDecorator(
   (data: keyof JwtPayloadRefresgToken, context: ExecutionContext): number => {
     const request = context.switchToHttp().getRequest();
     const user = request.user as JwtPayload;
-    console.log(user);
-    console.log(data);
+    // console.log(user);
+    // console.log(data);
 
     if (!user) {
       throw new ForbiddenException("token notog'ri");
@@ -18,7 +18,7 @@ export const GetCurrentUser = createParamDecorator(
     if (!data) {
       return data;
     }
-    console.log('user', user);
+    // console.log('user', user);
 
     return user[data];
   },

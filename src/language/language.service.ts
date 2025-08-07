@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateLanguageDto } from './dto/create-language.dto';
 import { UpdateLanguageDto } from './dto/update-language.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -12,7 +16,9 @@ export class LanguageService {
       const defaultLanguages = ['Uzbek', 'English', 'Russian'];
 
       for (const lang of defaultLanguages) {
-        const exists = await this.prismaService.language.findUnique({ where: { name: lang } });
+        const exists = await this.prismaService.language.findUnique({
+          where: { name: lang },
+        });
         if (!exists) {
           await this.prismaService.language.create({ data: { name: lang } });
           console.log(`✅ Default language yaratildi: ${lang}`);
@@ -29,7 +35,9 @@ export class LanguageService {
     try {
       const { name } = createLanguageDto;
 
-      const existingLanguage = await this.prismaService.language.findUnique({ where: { name } });
+      const existingLanguage = await this.prismaService.language.findUnique({
+        where: { name },
+      });
       if (existingLanguage) {
         throw new BadRequestException('Bunday til allaqachon mavjud');
       }
@@ -45,7 +53,7 @@ export class LanguageService {
   async findAll() {
     try {
       return await this.prismaService.language.findMany({
-        include: { users: true }, 
+        include: { users: true },
       });
     } catch (error) {
       throw error;
@@ -69,7 +77,9 @@ export class LanguageService {
 
   async update(id: number, updateLanguageDto: UpdateLanguageDto) {
     try {
-      const language = await this.prismaService.language.findUnique({ where: { id } });
+      const language = await this.prismaService.language.findUnique({
+        where: { id },
+      });
       if (!language) throw new NotFoundException('Bunday til topilmadi');
 
       if (updateLanguageDto.name) {
@@ -92,7 +102,9 @@ export class LanguageService {
 
   async remove(id: number) {
     try {
-      const language = await this.prismaService.language.findUnique({ where: { id } });
+      const language = await this.prismaService.language.findUnique({
+        where: { id },
+      });
       if (!language) throw new NotFoundException('Bunday til topilmadi');
 
       return await this.prismaService.language.delete({ where: { id } });

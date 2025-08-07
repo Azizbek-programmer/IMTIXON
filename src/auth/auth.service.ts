@@ -1,11 +1,11 @@
-import { 
-  BadRequestException, 
-  ConflictException, 
-  ForbiddenException, 
-  Injectable, 
-  NotFoundException, 
-  ServiceUnavailableException, 
-  UnauthorizedException 
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+  ServiceUnavailableException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
@@ -30,7 +30,12 @@ export class AuthService {
   ) {}
 
   private async generateTokens(user: User) {
-    const payload:JwtPayload = { id: user.id, email: user.email, role: user.role };
+    const payload: JwtPayload = {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      is_verified: user.is_verified
+    };
 
     const [accessToken, refreshToken] = await Promise.all([
       this.jwtService.signAsync(payload, {
@@ -48,7 +53,15 @@ export class AuthService {
 
   async signUp(createUserDto: CreateUserDto) {
     try {
-      const { email, password, confirm_password, full_name, phone, role, language_id } = createUserDto;
+      const {
+        email,
+        password,
+        confirm_password,
+        full_name,
+        phone,
+        role,
+        language_id,
+      } = createUserDto;
 
       if (password !== confirm_password) {
         throw new BadRequestException('Parollar mos emas');
@@ -64,17 +77,22 @@ export class AuthService {
       const hashedPassword = await bcrypt.hash(password, 10);
       const activationLink = uuidv4();
 
+        let userRole: Roles = Roles.CUSTOMER;
+  if (role && Object.values(Roles).includes(role as Roles)) {
+    userRole = role as Roles;
+  }
+
       const newUser = await this.prismaService.user.create({
         data: {
           email,
           full_name,
           phone,
-          role: Roles.CUSTOMER,
+          role: userRole,
           password: hashedPassword,
           activationLink: activationLink,
           is_verified: false,
           status: Status.INACTIVE,
-          language_id
+          language_id,
         },
       });
 
@@ -82,13 +100,15 @@ export class AuthService {
         await this.mailService.sendMail(newUser);
       } catch (error) {
         console.error('Email yuborishda xatolik:', error);
-        throw new ServiceUnavailableException('Email yuborishda xatolik yuz berdi');
+        throw new ServiceUnavailableException(
+          'Email yuborishda xatolik yuz berdi',
+        );
       }
 
       return {
         statusCode: 201,
         message: 'Royxatdan otdingiz. Email orqali akkauntni faollashtiring.',
-        userId: newUser.id,
+        userId: newUser,
       };
     } catch (error) {
       throw error;
@@ -101,7 +121,10 @@ export class AuthService {
         where: { activationLink: link },
       });
 
-      if (!user) throw new NotFoundException('Aktivatsiya havolasi notogri yoki eskirgan');
+      if (!user)
+        throw new NotFoundException(
+          'Aktivatsiya havolasi notogri yoki eskirgan',
+        );
 
       await this.prismaService.user.update({
         where: { id: user.id },
@@ -117,9 +140,12 @@ export class AuthService {
   async signIn(signInUserDto: SigninUserDto, res: Response) {
     try {
       const { email, password } = signInUserDto;
-      const user = await this.prismaService.user.findUnique({ where: { email } });
+      const user = await this.prismaService.user.findUnique({
+        where: { email },
+      });
 
-      if (!user) throw new UnauthorizedException('Bunday foydalanuvchi mavjud emas');
+      if (!user)
+        throw new UnauthorizedException('Bunday foydalanuvchi mavjud emas');
       const isMatch = await bcrypt.compare(password, user.password);
       if (!isMatch) throw new UnauthorizedException('Email yoki parol notogri');
 
@@ -158,16 +184,16 @@ export class AuthService {
 
   async signOut(userId: number, res: Response) {
     try {
-       const user = await this.prismaService.user.findUnique({
-      where: { id: userId },
-    });
+      const user = await this.prismaService.user.findUnique({
+        where: { id: userId },
+      });
 
       if (!user) throw new ForbiddenException('User topilmadi');
 
       await this.prismaService.user.update({
-      where: { id: userId },
-      data: { hashedRefreshToken: null },
-    });
+        where: { id: userId },
+        data: { hashedRefreshToken: null },
+      });
 
       await this.prismaService.user.update({
         where: { id: user.id },
@@ -187,10 +213,16 @@ export class AuthService {
 
   async refresh_token(userId: number, refreshToken: string, res: Response) {
     try {
-      const user = await this.prismaService.user.findUnique({ where: { id: userId } });
-      if (!user || !user.hashedRefreshToken) throw new UnauthorizedException('User topilmadi');
+      const user = await this.prismaService.user.findUnique({
+        where: { id: userId },
+      });
+      if (!user || !user.hashedRefreshToken)
+        throw new UnauthorizedException('User topilmadi');
 
-      const rtMatches = await bcrypt.compare(refreshToken, user.hashedRefreshToken);
+      const rtMatches = await bcrypt.compare(
+        refreshToken,
+        user.hashedRefreshToken,
+      );
       if (!rtMatches) throw new UnauthorizedException('Refresh token notogri');
 
       const tokens = await this.generateTokens(user);
@@ -215,7 +247,9 @@ export class AuthService {
         accessToken: tokens.accessToken,
       };
     } catch (error) {
-      throw new UnauthorizedException(error.message || 'Token yangilashda xatolik');
+      throw new UnauthorizedException(
+        error.message || 'Token yangilashda xatolik',
+      );
     }
   }
 }

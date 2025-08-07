@@ -17,11 +17,10 @@ import { GetCurrentUser, GetCurrentUserId } from '../common/decorators';
 import type { Response } from 'express';
 import { AuthGuard, RfreshTokenGuard } from 'src/common/guard';
 import { ResposeFields } from 'src/common/types';
-import { Roles } from '../common/decorators/roles.decorator';
 import { RoleGuard } from 'src/common/guard/role.guard';
 
 @Controller('auth')
-@UseGuards(AuthGuard, RoleGuard)
+@UseGuards( RoleGuard)
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
@@ -29,7 +28,7 @@ export class AuthController {
   signUp(@Body() createUserDto: CreateUserDto) {
     return this.authService.signUp(createUserDto);
   }
-  @Roles('SUPERADMIN', 'ADMIN', 'CUSTOMER') 
+  // @Roles('SUPERADMIN', 'ADMIN', 'CUSTOMER')
   @HttpCode(200)
   @Post('signIn')
   signIn(
@@ -46,7 +45,7 @@ export class AuthController {
     @GetCurrentUserId() id: string,
     @Res({ passthrough: true }) res: Response,
   ) {
-    return this.authService.signOut(+id, res)
+    return this.authService.signOut(+id, res);
   }
 
   @UseGuards(RfreshTokenGuard)
@@ -60,7 +59,7 @@ export class AuthController {
     return this.authService.refresh_token(userId, refreshToken, res);
   }
 
-    @Get('activate/:link')
+  @Get('activate/:link')
   async activate(@Param('link') link: string) {
     return this.authService.activateAccount(link);
   }

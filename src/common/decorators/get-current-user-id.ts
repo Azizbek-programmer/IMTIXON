@@ -12,7 +12,7 @@ export const GetCurrentUserId = createParamDecorator(
     if (!user) {
       throw new ForbiddenException("token notog'ri");
     }
-    console.log('user', user);
+    // console.log('user', user);
 
     return user.id;
   },

@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, InternalServerErrorException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateNotificationDto } from './dto/create-notification.dto';
 import { UpdateNotificationDto } from './dto/update-notification.dto';
@@ -19,7 +23,11 @@ export class NotificationsService {
         data: createNotificationDto,
       });
 
-      return { statusCode: 201, message: 'Bildirishnoma yaratildi', data: notification };
+      return {
+        statusCode: 201,
+        message: 'Bildirishnoma yaratildi',
+        data: notification,
+      };
     } catch (error) {
       throw new InternalServerErrorException(error.message || 'Server xatosi');
     }
@@ -32,17 +40,19 @@ export class NotificationsService {
       });
 
       const unreadIds = notifications
-    .filter(n => !n.is_read)
-    .map(n => n.id);
+        .filter((n) => !n.is_read)
+        .map((n) => n.id);
 
-  if (unreadIds.length > 0) {
-    await this.prismaService.notifications.updateMany({
-      where: { id: { in: unreadIds } },
-      data: { is_read: true },
-    });
+      if (unreadIds.length > 0) {
+        await this.prismaService.notifications.updateMany({
+          where: { id: { in: unreadIds } },
+          data: { is_read: true },
+        });
 
-    notifications.forEach(n => { n.is_read = true });
-  }
+        notifications.forEach((n) => {
+          n.is_read = true;
+        });
+      }
 
       return { statusCode: 200, data: notifications };
     } catch (error) {
@@ -59,19 +69,21 @@ export class NotificationsService {
     if (!notification) throw new NotFoundException('Bildirishnoma topilmadi');
 
     if (notification.user_id === currentUserId && !notification.is_read) {
-    await this.prismaService.notifications.update({
-      where: { id },
-      data: { is_read: true },
-    });
-    notification.is_read = true; 
-  }
+      await this.prismaService.notifications.update({
+        where: { id },
+        data: { is_read: true },
+      });
+      notification.is_read = true;
+    }
 
     return { statusCode: 200, data: notification };
   }
 
   async update(id: number, updateNotificationDto: UpdateNotificationDto) {
     try {
-      const notification = await this.prismaService.notifications.findUnique({ where: { id } });
+      const notification = await this.prismaService.notifications.findUnique({
+        where: { id },
+      });
       if (!notification) throw new NotFoundException('Bildirishnoma topilmadi');
 
       const updated = await this.prismaService.notifications.update({
@@ -79,7 +91,11 @@ export class NotificationsService {
         data: updateNotificationDto,
       });
 
-      return { statusCode: 200, message: 'Bildirishnoma yangilandi', data: updated };
+      return {
+        statusCode: 200,
+        message: 'Bildirishnoma yangilandi',
+        data: updated,
+      };
     } catch (error) {
       throw new InternalServerErrorException(error.message || 'Server xatosi');
     }
@@ -87,7 +103,9 @@ export class NotificationsService {
 
   async remove(id: number) {
     try {
-      const notification = await this.prismaService.notifications.findUnique({ where: { id } });
+      const notification = await this.prismaService.notifications.findUnique({
+        where: { id },
+      });
       if (!notification) throw new NotFoundException('Bildirishnoma topilmadi');
 
       await this.prismaService.notifications.delete({ where: { id } });

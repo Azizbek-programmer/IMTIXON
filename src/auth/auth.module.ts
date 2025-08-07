@@ -7,11 +7,10 @@ import { UserModule } from 'src/user/user.module';
 import { MailModule } from 'src/mail/mail.module';
 import { AcessTokenStrategy, RefreshTokenStrategy } from 'src/common/stratgies';
 
-
 @Module({
-  imports:[JwtModule.register({}), PrismaModule, UserModule, MailModule],
+  imports: [JwtModule.register({}), PrismaModule, UserModule, MailModule],
   controllers: [AuthController],
   providers: [AuthService, AcessTokenStrategy, RefreshTokenStrategy],
-  exports: [AuthService],
+  exports: [AuthService, JwtModule],
 })
 export class AuthModule {}

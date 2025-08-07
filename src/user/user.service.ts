@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { PrismaService } from '../prisma/prisma.service';
@@ -8,9 +12,7 @@ import { Roles, Status } from '../../generated/prisma';
 
 @Injectable()
 export class UserService {
-  constructor(
-    private readonly prismaService: PrismaService,
-  ) {}
+  constructor(private readonly prismaService: PrismaService) {}
 
   async createSuperAdminData() {
     try {
@@ -26,14 +28,14 @@ export class UserService {
       const superAdmin = await this.prismaService.user.create({
         data: {
           full_name: 'Super Admin',
-          email: 'admin@example.com',
+          email: 'super@gmail.com',
           phone: '+998901112233',
-          password: await bcrypt.hash('P@ssw0rd123', 10),
+          password: await bcrypt.hash('super1', 10),
           status: Status.ACTIVE,
           role: Roles.SUPERADMIN,
           is_verified: true,
           activationLink: uuidv4(),
-          language_id: 1
+          language_id: 1,
         },
       });
 
@@ -44,30 +46,98 @@ export class UserService {
     }
   }
 
+  async createAdminData() {
+  try {
+    const existingAdmins = await this.prismaService.user.findMany({
+      where: { role: Roles.ADMIN },
+    });
+
+    if (existingAdmins.length > 0) {
+      console.log('❗ Admin allaqachon mavjud');
+      return existingAdmins[0];
+    }
+
+    const admin = await this.prismaService.user.create({
+      data: {
+        full_name: 'Admin User',
+        email: 'admin@gmail.com',
+        phone: '+998901112234',
+        password: await bcrypt.hash('Admin1', 10),
+        status: Status.ACTIVE,
+        role: Roles.ADMIN,
+        is_verified: true,
+        activationLink: uuidv4(),
+        language_id: 1,
+      },
+    });
+
+    console.log('✅ Admin yaratildi');
+    return admin;
+  } catch (error) {
+    throw error;
+  }
+}
+
+async createWorkerData() {
+  try {
+    const existingWorkers = await this.prismaService.user.findMany({
+      where: { role: Roles.WORKER },
+    });
+
+    if (existingWorkers.length > 0) {
+      console.log('❗ Worker allaqachon mavjud');
+      return existingWorkers[0];
+    }
+
+    const worker = await this.prismaService.user.create({
+      data: {
+        full_name: 'Worker User',
+        email: 'worker@gmail.com',
+        phone: '+998901112235',
+        password: await bcrypt.hash('worker1', 10),
+        status: Status.ACTIVE,
+        role: Roles.WORKER,
+        is_verified: true,
+        activationLink: uuidv4(),
+        language_id: 1,
+      },
+    });
+
+    console.log('✅ Worker yaratildi');
+    return worker;
+  } catch (error) {
+    throw error;
+  }
+}
+
+
   async create(createUserDto: CreateUserDto) {
     try {
-      const { full_name, phone, email, password, confirm_password, role } = createUserDto;
+      const { full_name, phone, email, password, confirm_password, role } =
+        createUserDto;
 
       if (password !== confirm_password) {
         throw new BadRequestException('Parollar mos emas');
       }
 
-      const existingEmail = await this.prismaService.user.findUnique({ where: { email } });
+      const existingEmail = await this.prismaService.user.findUnique({
+        where: { email },
+      });
       if (existingEmail) {
-        throw new BadRequestException('Bu email bilan foydalanuvchi allaqachon mavjud');
+        throw new BadRequestException(
+          'Bu email bilan foydalanuvchi allaqachon mavjud',
+        );
       }
 
-      if (!Object.values(Roles).includes(role as Roles)) {
-        throw new BadRequestException('Bunday role mavjud emas');
-      }
+      const userRole: Roles = role ?? Roles.CUSTOMER;
 
-      let userRole: Roles = Roles.CUSTOMER;
-      if (role) {
-        if (!Object.values(Roles).includes(role)) {
-          throw new BadRequestException('Bunday role mavjud emas');
-        }
-        userRole = role;
-      }
+  // if (role) {
+  //   const upperRole = role.toUpperCase(); // "admin" -> "ADMIN"
+  //   if (!Object.values(Roles).includes(upperRole as Roles)) {
+  //     throw new BadRequestException('Bunday role mavjud emas');
+  //   }
+  //   userRole = upperRole as Roles;
+  // }
 
       const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -78,7 +148,7 @@ export class UserService {
           email,
           password: hashedPassword,
           is_verified: false,
-          status: Status.INACTIVE, 
+          status: Status.INACTIVE,
           role: userRole,
           activationLink: uuidv4(),
         },
@@ -106,6 +176,13 @@ export class UserService {
 
   async update(id: number, updateUserDto: UpdateUserDto) {
     try {
+      const oldUser = await this.prismaService.user.findUnique({
+        where: { id },
+      });
+      if (!oldUser) throw new NotFoundException('User topilmadi');
+
+      (Request as any).oldEntity = oldUser;
+
       return await this.prismaService.user.update({
         where: { id },
         data: updateUserDto,
@@ -117,6 +194,13 @@ export class UserService {
 
   async remove(id: number) {
     try {
+      const oldUser = await this.prismaService.user.findUnique({
+        where: { id },
+      });
+      if (!oldUser) throw new NotFoundException('User topilmadi');
+
+      (Request as any).oldEntity = oldUser;
+
       return await this.prismaService.user.delete({ where: { id } });
     } catch (error) {
       throw error;

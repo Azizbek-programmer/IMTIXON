@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsInt, IsOptional, IsString, IsEnum } from 'class-validator';
-import { ServiceRequestStatus, ServiceRating } from 'generated/prisma'
+import { ServiceRequestStatus, ServiceRating } from 'generated/prisma';
 
 export class CreateServiceRequestDto {
   @ApiProperty({ example: 1, description: 'Foydalanuvchi ID' })
@@ -11,12 +11,20 @@ export class CreateServiceRequestDto {
   @IsInt()
   service_id: number;
 
-  @ApiProperty({ example: '2025-08-05 14:00', description: 'Rejalashtirilgan vaqt', required: false })
+  @ApiProperty({
+    example: '2025-08-05 14:00',
+    description: 'Rejalashtirilgan vaqt',
+    required: false,
+  })
   @IsOptional()
   @IsString()
   scheduled_at?: string;
 
-  @ApiProperty({ example: 'Toshkent, Chilonzor 5', description: 'Manzil', required: false })
+  @ApiProperty({
+    example: 'Toshkent, Chilonzor 5',
+    description: 'Manzil',
+    required: false,
+  })
   @IsOptional()
   @IsString()
   address?: string;
@@ -31,7 +39,11 @@ export class CreateServiceRequestDto {
   @IsEnum(ServiceRequestStatus)
   status?: ServiceRequestStatus;
 
-  @ApiProperty({ example: '75', description: 'Haqiqiy davomiylik (minut)', required: false })
+  @ApiProperty({
+    example: '75',
+    description: 'Haqiqiy davomiylik (minut)',
+    required: false,
+  })
   @IsOptional()
   @IsString()
   real_duration_minutes?: string;
@@ -43,7 +55,11 @@ export class CreateServiceRequestDto {
 }
 
 export class UpdateServiceRequestDto {
-  @ApiProperty({ example: 'COMPLETED', enum: ServiceRequestStatus, required: false })
+  @ApiProperty({
+    example: 'COMPLETED',
+    enum: ServiceRequestStatus,
+    required: false,
+  })
   @IsOptional()
   @IsEnum(ServiceRequestStatus)
   status?: ServiceRequestStatus;

@@ -73,6 +73,8 @@ enum ActivityType {
   CREATE
   UPDATE
   DELETE
+  GET_ALL
+  GETID
   LOGIN
   LOGOUT
 }
@@ -125,14 +127,13 @@ model User {
   password      String  
   phone         String?  
   status        Status
-  role          Roles  //@default(Roles.CUSTOMER)
+  role          Roles  
   hashedRefreshToken String?
   activationLink     String
   is_verified   Boolean  @default(false)  
   language_id   Int? 
 
   reviews    Reviews[]
-  activity_logs   Activity_logs[]
   notifications   Notifications[]
   customerRequests   Service_requests[]  @relation("ServiceRequestsUser")
   technicianRequests Service_requests[]  @relation("ServiceRequestsTechnician")
@@ -260,18 +261,6 @@ model Images {
   product Product @relation(fields: [product_id], references: [id], onDelete: Cascade)
 }
 
-model Activity_logs {
-  id          Int      @id @default(autoincrement())
-  user_id     Int
-  type        ActivityType
-  target_table String   @db.VarChar(100)
-  old_value    String?  @db.VarChar(255)
-  new_value    String?  @db.VarChar(255)
-
-  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
-}
 
 model Order {
   id               Int            @id @default(autoincrement())
@@ -323,3 +312,4 @@ model Payments {
   user  User  @relation(fields: [user_id], references: [id], onDelete: Cascade)
   order Order @relation(fields: [order_id], references: [id], onDelete: Cascade)
 }
+

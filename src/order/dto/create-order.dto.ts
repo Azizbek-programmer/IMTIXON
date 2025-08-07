@@ -29,7 +29,11 @@ export class CreateOrderDto {
   @IsEnum(PaymentMethod)
   payment_method: PaymentMethod;
 
-  @ApiProperty({ example: 2, description: 'Service ID (faqat servis buyurtmalarida)', required: false })
+  @ApiProperty({
+    example: 2,
+    description: 'Service ID (faqat servis buyurtmalarida)',
+    required: false,
+  })
   @IsOptional()
   @IsInt()
   service_id?: number;

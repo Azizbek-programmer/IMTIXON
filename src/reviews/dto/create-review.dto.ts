@@ -35,9 +35,12 @@ export class UpdateReviewDto {
   @Max(5)
   rating?: number;
 
-  @ApiProperty({ example: 'Yaxshi xizmat!', description: 'Izoh', required: false })
+  @ApiProperty({
+    example: 'Yaxshi xizmat!',
+    description: 'Izoh',
+    required: false,
+  })
   @IsOptional()
   @IsString()
   comment?: string;
 }
-

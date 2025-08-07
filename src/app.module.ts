@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { UserModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
 import { ConfigModule } from '@nestjs/config';
@@ -13,9 +13,16 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { OrderModule } from './order/order.module';
 import { OrderItemsModule } from './order_items/order_items.module';
 import { PaymentsModule } from './payments/payments.module';
+import { JwtModule } from '@nestjs/jwt';
 
 @Module({
   imports: [
+    JwtModule.register({
+      secret: process.env.ACCESS_TOKEN_KEY,
+      signOptions: { expiresIn: '1h' },
+      global: true // agar uni hamma joyda ishlatmoqchi bo‘lsang
+    }),
+
     ConfigModule.forRoot({ envFilePath: '.env', isGlobal: true }),
     UserModule,
     AuthModule,

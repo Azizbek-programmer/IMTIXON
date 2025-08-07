@@ -12,7 +12,10 @@ import { AuthGuard as PassportAuthGuard } from '@nestjs/passport';
 import { Request } from 'express';
 
 @Injectable()
-export class AuthGuard extends PassportAuthGuard('access-jwt') implements CanActivate {
+export class AuthGuard
+  extends PassportAuthGuard('access-jwt')
+  implements CanActivate
+{
   constructor(
     private readonly jwtService: JwtService,
     private readonly reflector: Reflector,
@@ -20,9 +23,7 @@ export class AuthGuard extends PassportAuthGuard('access-jwt') implements CanAct
     super();
   }
 
-  async canActivate(
-    context: ExecutionContext,
-  ){
+  async canActivate(context: ExecutionContext) {
     const req: Request | any = context.switchToHttp().getRequest();
 
     const isPublic = this.reflector.getAllAndOverride('ispublic', [
@@ -56,6 +57,8 @@ export class AuthGuard extends PassportAuthGuard('access-jwt') implements CanAct
     if (!payload) {
       throw new UnauthorizedException('Token notogri');
     }
+// console.log("========>>>>>>>>>>>>", payload.is_verified);
+// console.log(":::::::::::>>>>", payload);
 
     if (!payload.is_verified) {
       throw new ForbiddenException('Siz faol foydalanuvchi emassiz');

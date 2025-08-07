@@ -1,9 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsDateString, IsEnum, IsInt, IsOptional } from 'class-validator';
-import { PaymentMethod, PaymentStatus, PaymentType } from 'generated/prisma'; 
+import { PaymentMethod, PaymentStatus, PaymentType } from 'generated/prisma';
 
 export class CreatePaymentDto {
-
   @ApiProperty({ example: 1, description: 'Foydalanuvchi ID' })
   @IsInt()
   user_id: number;
@@ -24,7 +23,11 @@ export class CreatePaymentDto {
   @IsEnum(PaymentStatus)
   status: PaymentStatus;
 
-  @ApiProperty({ example: '2025-08-04T12:00:00Z', description: 'Tolov sanasi', required: false })
+  @ApiProperty({
+    example: '2025-08-04T12:00:00Z',
+    description: 'Tolov sanasi',
+    required: false,
+  })
   @IsOptional()
   @IsDateString()
   paid_at?: string;

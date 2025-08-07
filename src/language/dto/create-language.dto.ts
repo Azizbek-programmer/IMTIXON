@@ -6,4 +6,3 @@ export class CreateLanguageDto {
   @MaxLength(50, { message: 'Language name 50 belgidan oshmasligi kerak' })
   name: string;
 }
-

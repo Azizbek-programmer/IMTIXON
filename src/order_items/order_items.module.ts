@@ -4,7 +4,7 @@ import { OrderItemsController } from './order_items.controller';
 import { PrismaModule } from 'src/prisma/prisma.module';
 
 @Module({
-  imports:[PrismaModule],
+  imports: [PrismaModule],
   controllers: [OrderItemsController],
   providers: [OrderItemsService],
   exports: [OrderItemsService],

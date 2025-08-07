@@ -1,7 +1,8 @@
-import { Roles } from "generated/prisma";
+import { Roles } from 'generated/prisma';
 
 export type JwtPayload = {
   id: number;
   email: string;
-  role: Roles
+  role: Roles;
+  is_verified: boolean
 };

@@ -1,11 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import {
-  IsEnum,
-  IsInt,
-  IsOptional,
-  IsString,
-  Min,
-} from 'class-validator';
+import { IsEnum, IsInt, IsOptional, IsString, Min } from 'class-validator';
 import { ProductColor } from 'generated/prisma';
 
 export class CreateProductDto {
@@ -13,7 +7,10 @@ export class CreateProductDto {
   @IsString()
   name: string;
 
-  @ApiProperty({ example: 'Yogochdan ishlangan, qulay karavot', required: false })
+  @ApiProperty({
+    example: 'Yogochdan ishlangan, qulay karavot',
+    required: false,
+  })
   @IsOptional()
   @IsString()
   description?: string;
@@ -28,7 +25,11 @@ export class CreateProductDto {
   @Min(0)
   stock_quantity: number;
 
-  @ApiProperty({ example: '200x180x40', description: 'Olchamlari', required: false })
+  @ApiProperty({
+    example: '200x180x40',
+    description: 'Olchamlari',
+    required: false,
+  })
   @IsOptional()
   @IsString()
   dimensions?: string;
